@@ -1,56 +1,114 @@
-# Welcome to your Expo app 👋
+# CamDigiKey eKYC Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A minimal Expo application for Cambodian identity verification using CamDigiKey integration.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **ID Information Form**: Capture and validate Cambodian ID card details
+- **Document Capture**: Camera-based ID card capture with front/back camera support
+- **Liveness Check**: Multi-step face verification (turn left, turn right, nod)
+- **Verification**: Mock API integration with verification scores
+- **Dark Theme**: Apple glass dark theme with red wine primary color
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- **Framework**: Expo SDK ~57.0.24
+- **Navigation**: Expo Router ~57.0.22
+- **Camera**: expo-camera ^57.0.5
+- **Styling**: NativeWind ^4.2.7 with Tailwind CSS ^3.4.19
+- **Language**: TypeScript ~6.0.3
+- **Testing**: Jest with React Native Testing Library
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Installation
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Running the App
 
-### Other setup steps
+```bash
+# Start development server
+npm start
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+# Run on iOS
+npm run ios
 
-## Learn more
+# Run on Android
+npm run android
 
-To learn more about developing your project with Expo, look at the following resources:
+# Run on web
+npm run web
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Testing
 
-## Join the community
+```bash
+# Run tests
+npm test
 
-Join our community of developers creating universal apps.
+# Run tests in watch mode
+npm run test:watch
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Run tests with coverage
+npm run test:coverage
+```
+
+## Project Structure
+
+```
+src/
+├── app/                    # Expo Router pages
+│   ├── id-form.tsx        # ID information input
+│   ├── document-capture.tsx
+│   ├── liveness-capture.tsx
+│   └── verification.tsx
+├── components/
+│   └── IdCardForm.tsx     # Reusable ID form component
+├── services/
+│   └── CamDigiKeyService.ts
+├── types/
+│   └── camdigikey.ts      # TypeScript type definitions
+└── theme.ts               # Centralized theme configuration
+```
+
+## Verification Flow
+
+1. **ID Form** → Enter user information (ID number, names, dates)
+2. **Document Capture** → Capture ID card photo
+3. **Liveness Check** → Complete 3-step face verification
+4. **Verification** → Display verification scores and results
+
+## Mock API
+
+The app currently uses a mock CamDigiKey API. To enable real API integration:
+
+1. Update `USE_MOCK` in `src/services/CamDigiKeyService.ts`
+2. Configure the real API endpoint
+3. Provide valid credentials
+
+## Theme
+
+The app uses a centralized theme system with:
+- **Primary Color**: Red Wine (#e13d3d)
+- **Background**: Dark (#1a1a1a)
+- **Surface**: Dark Gray (#2a2a2a)
+- **Text**: White with secondary gray
+
+## Camera Permissions
+
+The app requires camera access for document and liveness capture. Permissions are configured in:
+- iOS: `app.json` (NSCameraUsageDescription)
+- Android: `app.json` (CAMERA permission)
+
+## Version
+
+- **Current**: 1.0.0
+- **Expo SDK**: 57.0.24
+- **React Native**: 0.86.3
+
+## Development Notes
+
+- Read Expo SDK 57 documentation: https://docs.expo.dev/versions/v57.0.0/
+- No backend/database - uses mock verification
+- Client-side only - no actual face analysis implemented
