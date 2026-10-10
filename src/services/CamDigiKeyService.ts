@@ -2,12 +2,13 @@ import { CamDigiKeyRequest, CamDigiKeyResponse, VerificationResult } from '../ty
 
 // Configuration
 const MOCKOON_BASE_URL = 'http://10.100.42.22:3000';
-const USE_MOCK = true; // Set to false when using real CamDigiKey API
+const USE_MOCK = false; // Set to true for local testing with mockoon
 
-// Real CamDigiKey Configuration (for future use)
+// Real CamDigiKey Configuration
 const CAMDIGIKEY_CONFIG = {
   MEMBER_CODE: 'CAMDX-20201222', // Development: CAMDX-20201222, Production: CAMDX-000003
-  BASE_URL: 'https://security-server.consumer1.com', // Replace with actual security server
+  BASE_URL: 'https://security-server.consumer1.com',
+  X_ROAD_CLIENT: 'CAMBODIA/GOV/CAMDX-20201222/MOBILE_APP', // Replace with your actual subsystem code
 };
 
 class CamDigiKeyService {
@@ -47,7 +48,7 @@ class CamDigiKeyService {
         return this.mockVerifyEKYC(request);
       }
 
-      // Real API call (for future implementation)
+      // Real API call
       const endpoint = `/r1/CAMBODIA/GOV/${CAMDIGIKEY_CONFIG.MEMBER_CODE}/CAMDIGIKEY_KYC/info-idcard-liveness-v2.1`;
       const url = `${this.baseUrl}${endpoint}`;
 
@@ -56,16 +57,18 @@ class CamDigiKeyService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-Road-Client': 'CAMBODIA/GOV/CAMDX-20201234/SUBSYSTEM_CODE', // Replace with actual client ID
+          'X-Road-Client': CAMDIGIKEY_CONFIG.X_ROAD_CLIENT,
         },
         body: JSON.stringify(request),
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('CamDigiKey API response:', data);
+      return data;
     } catch (error) {
       console.error('CamDigiKey API error:', error);
       throw error;
