@@ -5,7 +5,13 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="id-form" options={{ headerShown: false }} />
+        <Stack.Screen name="document-capture" options={{ headerShown: false }} />
+        <Stack.Screen name="liveness-capture" options={{ headerShown: false }} />
+        <Stack.Screen name="verification" options={{ headerShown: false }} />
+      </Stack>
     </>
   );
 }
