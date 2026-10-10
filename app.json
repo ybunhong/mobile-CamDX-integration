@@ -12,7 +12,16 @@
       "bundleIdentifier": "com.ybunhongggsteam.mobile",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "This app needs camera access to capture photos for identity verification."
+        "NSCameraUsageDescription": "This app needs camera access to capture photos for identity verification.",
+        "NSFaceIDUsageDescription": "Use Face ID to secure your identity verification.",
+        "NSMicrophoneUsageDescription": "This app does not use microphone.",
+        "NSPhotoLibraryAddUsageDescription": "This app needs to save verification photos to your photo library.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library for identity verification.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsArbitraryLoadsInWebContent": false,
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "android": {
@@ -24,8 +33,11 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "CAMERA"
-      ]
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "blockExternalIntents": true
     },
     "web": {
       "output": "static",

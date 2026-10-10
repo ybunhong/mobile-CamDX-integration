@@ -18,6 +18,11 @@ class CamDigiKeyService {
   constructor() {
     this.baseUrl = USE_MOCK ? MOCKOON_BASE_URL : CAMDIGIKEY_CONFIG.BASE_URL;
     this.useMock = USE_MOCK;
+    
+    // Validate that the real API URL is secure
+    if (!this.useMock && !isValidUrl(this.baseUrl)) {
+      console.error('Security Warning: API URL must use HTTPS');
+    }
   }
 
   /**
@@ -77,7 +82,16 @@ class CamDigiKeyService {
       }
 
       const data = await response.json();
-      console.log('CamDigiKey API response:', data);
+      console.log('CamDigiKey API response:', {
+        ...data,
+        data: {
+          ...data.data,
+          userInfo: {
+            ...data.data.userInfo,
+            idNumber: maskSensitiveData(data.data.userInfo.idNumber),
+          },
+        },
+      });
       return data;
     } catch (error) {
       console.error('CamDigiKey API error:', error);

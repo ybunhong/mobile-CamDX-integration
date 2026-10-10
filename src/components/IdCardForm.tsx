@@ -30,29 +30,32 @@ export default function IdCardForm() {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!userInfo.idNumber || userInfo.idNumber.length !== 9) {
-      newErrors.idNumber = 'ID number must be 9 digits';
+    if (!validateIdNumber(userInfo.idNumber)) {
+      newErrors.idNumber = 'ID number must be exactly 9 digits';
     }
-    if (!userInfo.firstNameKh) {
+    if (!validateName(userInfo.firstNameKh)) {
       newErrors.firstNameKh = 'First name in Khmer is required';
     }
-    if (!userInfo.lastNameKh) {
+    if (!validateName(userInfo.lastNameKh)) {
       newErrors.lastNameKh = 'Last name in Khmer is required';
     }
-    if (!userInfo.firstNameEn) {
+    if (!validateName(userInfo.firstNameEn)) {
       newErrors.firstNameEn = 'First name in English is required';
     }
-    if (!userInfo.lastNameEn) {
+    if (!validateName(userInfo.lastNameEn)) {
       newErrors.lastNameEn = 'Last name in English is required';
     }
-    if (!userInfo.dob) {
-      newErrors.dob = 'Date of birth is required';
+    if (!validateDateFormat(userInfo.dob)) {
+      newErrors.dob = 'Date of birth must be in YYYY-MM-DD format';
     }
-    if (!userInfo.issuedDate) {
-      newErrors.issuedDate = 'Issued date is required';
+    if (!validateDateFormat(userInfo.issuedDate)) {
+      newErrors.issuedDate = 'Issued date must be in YYYY-MM-DD format';
     }
-    if (!userInfo.expiredDate) {
-      newErrors.expiredDate = 'Expired date is required';
+    if (!validateDateFormat(userInfo.expiredDate)) {
+      newErrors.expiredDate = 'Expired date must be in YYYY-MM-DD format';
+    }
+    if (!validateGender(userInfo.gender)) {
+      newErrors.gender = 'Gender must be M or F';
     }
 
     setErrors(newErrors);
@@ -61,9 +64,11 @@ export default function IdCardForm() {
 
   const handleSubmit = () => {
     if (validateForm()) {
+      // Sanitize user info before sending
+      const sanitizedUserInfo = sanitizeUserInfo(userInfo);
       router.push({
         pathname: '/document-capture',
-        params: { userInfo: JSON.stringify(userInfo) },
+        params: { userInfo: JSON.stringify(sanitizedUserInfo) },
       });
     } else {
       Alert.alert('Validation Error', 'Please fill in all required fields correctly');
@@ -114,7 +119,9 @@ export default function IdCardForm() {
   };
 
   const updateField = (field: keyof CamDigiKeyUserInfo, value: string) => {
-    setUserInfo(prev => ({ ...prev, [field]: value }));
+    // Sanitize input on change
+    const sanitizedValue = sanitizeInput(value);
+    setUserInfo(prev => ({ ...prev, [field]: sanitizedValue }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
