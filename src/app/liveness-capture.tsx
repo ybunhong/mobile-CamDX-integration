@@ -15,7 +15,6 @@ export default function LivenessCaptureScreen() {
     { action: '2', instruction: 'Turn your face to the RIGHT', completed: false },
     { action: '3', instruction: 'Nod your head UP and DOWN', completed: false },
   ]);
-  const [finalLivenessImage, setFinalLivenessImage] = useState<string | null>(null);
   
   const { userInfo, idImage } = useLocalSearchParams();
   const userInfoData: CamDigiKeyUserInfo = userInfo ? JSON.parse(userInfo as string) : null;
@@ -58,13 +57,14 @@ export default function LivenessCaptureScreen() {
         };
         setLivenessSteps(updatedSteps);
         
-        if (currentStep === livenessSteps.length - 1) {
-          setFinalLivenessImage(photo.uri);
-        }
-
         if (currentStep < livenessSteps.length - 1) {
           setCurrentStep(currentStep + 1);
         } else {
+          // All steps completed - proceed to verification
+          const allLivenessImages = updatedSteps
+            .filter(step => step.imageUri)
+            .map(step => step.imageUri);
+
           Alert.alert(
             'Liveness Check Complete',
             'All liveness steps completed successfully',
@@ -77,7 +77,7 @@ export default function LivenessCaptureScreen() {
                     params: {
                       userInfo: JSON.stringify(userInfoData),
                       idImage: idImageData,
-                      livenessImages: JSON.stringify([finalLivenessImage || photo.uri]),
+                      livenessImages: JSON.stringify(allLivenessImages),
                       actions: JSON.stringify(updatedSteps.map(s => s.action)),
                     },
                   });
@@ -88,11 +88,23 @@ export default function LivenessCaptureScreen() {
         }
       } catch (error) {
         console.error('Error capturing liveness:', error);
-        Alert.alert('Error', 'Failed to capture liveness step');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        Alert.alert(
+          'Capture Failed',
+          `Failed to capture liveness: ${errorMessage}. Please try again.`,
+          [
+            { text: 'Retry', onPress: captureLivenessStep },
+            { text: 'Cancel' }
+          ]
+        );
       }
     } else {
       console.error('Camera ref is null for liveness');
-      Alert.alert('Error', 'Camera not ready');
+      Alert.alert(
+        'Camera Error',
+        'Camera is not ready. Please wait a moment and try again.',
+        [{ text: 'OK' }]
+      );
     }
   }
 

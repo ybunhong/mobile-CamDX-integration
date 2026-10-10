@@ -59,11 +59,23 @@ export default function DocumentCaptureScreen() {
         }, 500);
       } catch (error) {
         console.error('Error capturing document:', error);
-        Alert.alert('Error', 'Failed to capture document');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        Alert.alert(
+          'Capture Failed',
+          `Failed to capture document: ${errorMessage}. Please try again.`,
+          [
+            { text: 'Retry', onPress: captureDocument },
+            { text: 'Cancel' }
+          ]
+        );
       }
     } else {
       console.error('Camera ref is null');
-      Alert.alert('Error', 'Camera not ready');
+      Alert.alert(
+        'Camera Error',
+        'Camera is not ready. Please wait a moment and try again.',
+        [{ text: 'OK' }]
+      );
     }
   }
 

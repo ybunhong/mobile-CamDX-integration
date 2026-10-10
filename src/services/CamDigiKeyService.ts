@@ -26,10 +26,18 @@ class CamDigiKeyService {
   async convertImageToBase64(uri: string): Promise<string> {
     try {
       const response = await fetch(uri);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status}`);
+      }
       const blob = await response.blob();
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          // Remove data URL prefix to get pure base64
+          const base64 = result.split(',')[1];
+          resolve(base64);
+        };
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
@@ -63,6 +71,8 @@ class CamDigiKeyService {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
@@ -122,10 +132,15 @@ class CamDigiKeyService {
     actions: string[]
   ): Promise<VerificationResult> {
     try {
+      // Validate inputs
+      if (!idImageUri || !livenessImageUris || livenessImageUris.length === 0) {
+        throw new Error('Missing required images for verification');
+      }
+
       // Convert images to base64
       const idImageBase64 = await this.convertImageToBase64(idImageUri);
       
-      // For liveness, we'll use the first image (or combine them based on requirements)
+      // Use the first liveness image for the API (as per documentation)
       const livenessBase64 = await this.convertImageToBase64(livenessImageUris[0]);
 
       // Build request

@@ -37,13 +37,24 @@ export default function VerificationScreen() {
       } else {
         Alert.alert(
           'Verification Failed',
-          'Please check your information and try again',
-          [{ text: 'OK' }]
+          `Verification failed. Incorrect fields: ${result.incorrectFields.join(', ') || 'None'}`,
+          [
+            { text: 'Try Again', onPress: () => setIsLoading(false) },
+            { text: 'OK' }
+          ]
         );
       }
     } catch (error) {
       console.error('Verification error:', error);
-      Alert.alert('Error', 'Verification failed. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      Alert.alert(
+        'Verification Error',
+        `${errorMessage}. Please check your connection and try again.`,
+        [
+          { text: 'Retry', onPress: handleVerification },
+          { text: 'Cancel' }
+        ]
+      );
     } finally {
       setIsLoading(false);
     }
