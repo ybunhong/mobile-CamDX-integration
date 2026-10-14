@@ -59,7 +59,7 @@ export interface VerificationResult {
 }
 
 // Form validation types
-export interface FormErrors {
+export interfaceFormErrors {
   idNumber?: string;
   firstNameKh?: string;
   lastNameKh?: string;
