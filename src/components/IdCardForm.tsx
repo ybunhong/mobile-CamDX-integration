@@ -126,7 +126,7 @@ export default function IdCardForm() {
     Alert.alert('Auto-filled', 'Form has been populated with mock Cambodian citizen data');
   };
 
-  const updateField = (field: keyof CamDigiKeyUserInfo, value: string) => {
+  const updateField = (field: keyof DiditUserInfo, value: string) => {
     // Sanitize input on change
     const sanitizedValue = sanitizeInput(value);
     setUserInfo(prev => ({ ...prev, [field]: sanitizedValue }));
