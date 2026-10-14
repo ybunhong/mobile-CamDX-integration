@@ -1,19 +1,27 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { borderRadius, colors, commonStyles, spacing } from '../theme';
-import { CamDigiKeyUserInfo, FormErrors } from '../types/camdigikey';
+import { FormErrors } from '../types/didit';
+import {
+  sanitizeInput,
+  sanitizeUserInfo,
+  validateDateFormat,
+  validateGender,
+  validateIdNumber,
+  validateName,
+} from '../utils/security';
 
 export default function IdCardForm() {
-  const [userInfo, setUserInfo] = useState<CamDigiKeyUserInfo>({
+  const [userInfo, setUserInfo] = useState<DiditUserInfo>({
     idNumber: '',
     firstNameKh: '',
     lastNameKh: '',
@@ -67,7 +75,7 @@ export default function IdCardForm() {
       // Sanitize user info before sending
       const sanitizedUserInfo = sanitizeUserInfo(userInfo);
       router.push({
-        pathname: '/document-capture',
+        pathname: '/face-capture',
         params: { userInfo: JSON.stringify(sanitizedUserInfo) },
       });
     } else {
@@ -76,7 +84,7 @@ export default function IdCardForm() {
   };
 
   const handleAutoFill = () => {
-    const mockDataOptions: CamDigiKeyUserInfo[] = [
+    const mockDataOptions: DiditUserInfo[] = [
       {
         idNumber: '011196245',
         firstNameKh: 'ការឌុល',

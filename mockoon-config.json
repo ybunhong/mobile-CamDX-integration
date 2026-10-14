@@ -1,0 +1,87 @@
+{
+  "uuid": "camdigikey-mock-environment",
+  "name": "CamDigiKey eKYC Mock API",
+  "endpointPrefix": "",
+  "latency": 50,
+  "port": 3000,
+  "hostname": "0.0.0.0",
+  "routes": [
+    {
+      "uuid": "info-idcard-liveness-route",
+      "method": "POST",
+      "endpoint": "api/camdigikey/info-idcard-liveness-v2.1",
+      "documentation": "CamDigiKey eKYC Verification - User Info, ID Card, and Liveness",
+      "responses": [
+        {
+          "uuid": "success-response",
+          "rules": [],
+          "rulesOperator": "OR",
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"error\": 0,\n  \"message\": \"Successfully\",\n  \"data\": {\n    \"userInfo\": {\n      \"idNumber\": \"{{body 'userInfo' 'idNumber'}}\",\n      \"score\": 1,\n      \"incorrectFields\": []\n    },\n    \"faceDocumentScore\": 0.9981736,\n    \"faceMoiScore\": 0.5696822\n  }\n}",
+          "latency": 1500,
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rulesInheritance": "NONE",
+          "disableTemplating": false,
+          "default": true
+        },
+        {
+          "uuid": "error-response",
+          "rules": [
+            {
+              "target": {
+                "key": "body",
+                "keyModifier": "",
+                "operator": "equals",
+                "value": "error"
+              }
+            }
+          ],
+          "rulesOperator": "OR",
+          "statusCode": 400,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"error\": 1,\n  \"message\": \"Invalid request\",\n  \"data\": null\n}",
+          "latency": 500,
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rulesInheritance": "NONE",
+          "disableTemplating": false,
+          "default": false
+        }
+      ],
+      "enabled": true
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyPrefix": "",
+  "https": false,
+  "cors": true,
+  "corsPreFlight": true,
+  "corsHeaders": [
+    "Content-Type"
+  ],
+  "corsExposedHeaders": [],
+  "corsMaxAge": 0,
+  "headers": [
+    {
+      "key": "X-Road-Client",
+      "value": "CAMBODIA/GOV/CAMDX-20201234/SUBSYSTEM_CODE"
+    }
+  ]
+}

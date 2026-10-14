@@ -1,43 +1,36 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { camdigikeyService } from '../services/CamDigiKeyService';
+import { diditService } from '../services/DiditService';
 import { borderRadius, colors, commonStyles, spacing } from '../theme';
-import { CamDigiKeyUserInfo, VerificationResult } from '../types/camdigikey';
+import { DiditUserInfo, DiditVerificationResult } from '../types/didit';
 
 export default function VerificationScreen() {
   const [isLoading, setIsLoading] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [verificationResult, setVerificationResult] = useState<DiditVerificationResult | null>(null);
   
-  const { userInfo, idImage, livenessImages, actions } = useLocalSearchParams();
-  const userInfoData: CamDigiKeyUserInfo = userInfo ? JSON.parse(userInfo as string) : null;
-  const idImageData: string = idImage as string;
-  const livenessImagesData: string[] = livenessImages ? JSON.parse(livenessImages as string) : [];
-  const actionsData: string[] = actions ? JSON.parse(actions as string) : [];
+  const { userInfo, faceImage } = useLocalSearchParams();
+  const userInfoData: DiditUserInfo = userInfo ? JSON.parse(userInfo as string) : null;
+  const faceImageData: string = faceImage as string;
 
   const handleVerification = async () => {
     setIsLoading(true);
     
     try {
-      const result = await camdigikeyService.completeVerification(
-        userInfoData,
-        idImageData,
-        livenessImagesData,
-        actionsData
-      );
+      const result = await diditService.completeVerification(faceImageData);
       
       setVerificationResult(result);
       
-      if (result.success) {
+      if (result.success && result.livenessOutcome === 'live') {
         Alert.alert(
           'Verification Successful',
-          'Your identity has been verified successfully',
+          'Your face has been verified successfully',
           [{ text: 'OK' }]
         );
       } else {
         Alert.alert(
           'Verification Failed',
-          `Verification failed. Incorrect fields: ${result.incorrectFields.join(', ') || 'None'}`,
+          `Liveness check: ${result.livenessOutcome}. Please try again.`,
           [
             { text: 'Try Again', onPress: () => setIsLoading(false) },
             { text: 'OK' }
@@ -70,6 +63,12 @@ export default function VerificationScreen() {
     if (score >= 0.8) return 'High';
     if (score >= 0.5) return 'Medium';
     return 'Low';
+  };
+
+  const getOutcomeColor = (outcome: string) => {
+    if (outcome === 'live' || outcome === 'match') return colors.success;
+    if (outcome === 'not_live' || outcome === 'no_match') return colors.error;
+    return colors.warning;
   };
 
   return (
@@ -107,16 +106,8 @@ export default function VerificationScreen() {
         <View style={commonStyles.section}>
           <Text style={commonStyles.sectionTitle}>Capture Summary</Text>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>ID Card:</Text>
+            <Text style={styles.infoLabel}>Face Image:</Text>
             <Text style={styles.infoValue}>✓ Captured</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Liveness Steps:</Text>
-            <Text style={styles.infoValue}>{livenessImagesData.length}/3 Completed</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Actions:</Text>
-            <Text style={styles.infoValue}>{actionsData.join(', ')}</Text>
           </View>
         </View>
 
@@ -125,53 +116,68 @@ export default function VerificationScreen() {
             <Text style={commonStyles.sectionTitle}>Verification Results</Text>
             
             <View style={styles.scoreRow}>
-              <Text style={styles.scoreLabel}>User Info Score:</Text>
+              <Text style={styles.scoreLabel}>Liveness Score:</Text>
               <View style={styles.scoreContainer}>
-                <Text style={[styles.scoreValue, { color: getScoreColor(verificationResult.userInfoScore) }]}>
-                  {(verificationResult.userInfoScore * 100).toFixed(1)}%
+                <Text style={[styles.scoreValue, { color: getScoreColor(verificationResult.livenessScore) }]}>
+                  {(verificationResult.livenessScore * 100).toFixed(1)}%
                 </Text>
-                <Text style={[styles.scoreLabel, { color: getScoreColor(verificationResult.userInfoScore) }]}>
-                  {getScoreLabel(verificationResult.userInfoScore)}
+                <Text style={[styles.scoreLabel, { color: getScoreColor(verificationResult.livenessScore) }]}>
+                  {getScoreLabel(verificationResult.livenessScore)}
                 </Text>
               </View>
             </View>
 
             <View style={styles.scoreRow}>
-              <Text style={styles.scoreLabel}>Face-Document Score:</Text>
+              <Text style={styles.scoreLabel}>Liveness Outcome:</Text>
               <View style={styles.scoreContainer}>
-                <Text style={[styles.scoreValue, { color: getScoreColor(verificationResult.faceDocumentScore) }]}>
-                  {(verificationResult.faceDocumentScore * 100).toFixed(1)}%
-                </Text>
-                <Text style={[styles.scoreLabel, { color: getScoreColor(verificationResult.faceDocumentScore) }]}>
-                  {getScoreLabel(verificationResult.faceDocumentScore)}
+                <Text style={[styles.scoreValue, { color: getOutcomeColor(verificationResult.livenessOutcome) }]}>
+                  {verificationResult.livenessOutcome.toUpperCase()}
                 </Text>
               </View>
             </View>
 
             <View style={styles.scoreRow}>
-              <Text style={styles.scoreLabel}>Face-MOI Score:</Text>
+              <Text style={styles.scoreLabel}>Quality Score:</Text>
               <View style={styles.scoreContainer}>
-                <Text style={[styles.scoreValue, { color: getScoreColor(verificationResult.faceMoiScore) }]}>
-                  {(verificationResult.faceMoiScore * 100).toFixed(1)}%
+                <Text style={[styles.scoreValue, { color: getScoreColor(verificationResult.qualityScore) }]}>
+                  {(verificationResult.qualityScore * 100).toFixed(1)}%
                 </Text>
-                <Text style={[styles.scoreLabel, { color: getScoreColor(verificationResult.faceMoiScore) }]}>
-                  {getScoreLabel(verificationResult.faceMoiScore)}
+                <Text style={[styles.scoreLabel, { color: getScoreColor(verificationResult.qualityScore) }]}>
+                  {getScoreLabel(verificationResult.qualityScore)}
                 </Text>
               </View>
             </View>
 
-            {verificationResult.incorrectFields.length > 0 && (
-              <View style={styles.errorSection}>
-                <Text style={styles.errorTitle}>Incorrect Fields:</Text>
-                {verificationResult.incorrectFields.map((field, index) => (
-                  <Text key={index} style={styles.errorText}>• {field}</Text>
-                ))}
-              </View>
+            {verificationResult.matchScore > 0 && (
+              <>
+                <View style={styles.scoreRow}>
+                  <Text style={styles.scoreLabel}>Face Match Score:</Text>
+                  <View style={styles.scoreContainer}>
+                    <Text style={[styles.scoreValue, { color: getScoreColor(verificationResult.matchScore) }]}>
+                      {(verificationResult.matchScore * 100).toFixed(1)}%
+                    </Text>
+                    <Text style={[styles.scoreLabel, { color: getScoreColor(verificationResult.matchScore) }]}>
+                      {getScoreLabel(verificationResult.matchScore)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.scoreRow}>
+                  <Text style={styles.scoreLabel}>Match Outcome:</Text>
+                  <View style={styles.scoreContainer}>
+                    <Text style={[styles.scoreValue, { color: getOutcomeColor(verificationResult.matchOutcome) }]}>
+                      {verificationResult.matchOutcome.toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
+              </>
             )}
 
-            <View style={[styles.resultBanner, { backgroundColor: verificationResult.success ? colors.success : colors.error }]}>
+            <View style={[styles.resultBanner, { backgroundColor: verificationResult.success && verificationResult.livenessOutcome === 'live' ? colors.success : colors.error }]}>
               <Text style={styles.resultText}>
-                {verificationResult.success ? '✓ Verification Successful' : '✗ Verification Failed'}
+                {verificationResult.success && verificationResult.livenessOutcome === 'live' 
+                  ? '✓ Verification Successful' 
+                  : '✗ Verification Failed'}
               </Text>
             </View>
           </View>
@@ -245,25 +251,6 @@ const styles = StyleSheet.create({
   scoreValue: {
     fontSize: 24,
     fontWeight: 'bold',
-  },
-  errorSection: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    borderRadius: borderRadius.sm,
-    padding: spacing.md,
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  errorTitle: {
-    color: colors.error,
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: spacing.sm,
-  },
-  errorText: {
-    color: colors.error,
-    fontSize: 14,
-    marginBottom: spacing.xs,
   },
   resultBanner: {
     borderRadius: borderRadius.md,
