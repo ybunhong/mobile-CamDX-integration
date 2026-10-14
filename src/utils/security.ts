@@ -8,7 +8,7 @@
 export function sanitizeInput(input: string): string {
   if (!input) return '';
   
-  // Remove potentially dangerous characters
+  // Remove potentially dangerous characters but preserve Khmer and international characters
   return input
     .replace(/[<>]/g, '') // Remove angle brackets
     .replace(/javascript:/gi, '') // Remove javascript: protocol
@@ -50,8 +50,9 @@ export function validateGender(gender: string): boolean {
 export function validateName(name: string): boolean {
   if (!name) return false;
   const sanitized = sanitizeInput(name);
-  // Allow letters, spaces, and Khmer characters
-  return /^[\p{L}\s]+$/u.test(sanitized);
+  // Allow letters, spaces, and any Unicode characters (including Khmer)
+  // Only reject empty strings or strings with only whitespace
+  return sanitized.trim().length > 0;
 }
 
 /**
