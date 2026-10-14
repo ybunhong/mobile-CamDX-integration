@@ -62,7 +62,9 @@
       "router": {},
       "eas": {
         "projectId": "dddb070f-1a86-4c54-b720-becc3b3648af"
-      }
+      },
+      "diditApiKey": "_UxRJdcVAXEeheW1xdiATK4yOpB_-2jazrXKssYW4X4",
+      "diditBaseUrl": "https://api.didit.me"
     },
     "owner": "ybunhongggs-team"
   }

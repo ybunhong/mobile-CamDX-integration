@@ -1,8 +1,9 @@
-import { DiditPassiveLivenessRequest, DiditPassiveLivenessResponse, DiditFaceMatchRequest, DiditFaceMatchResponse, DiditVerificationResult } from '../types/didit';
+import Constants from 'expo-constants';
+import { DiditFaceMatchRequest, DiditFaceMatchResponse, DiditPassiveLivenessRequest, DiditPassiveLivenessResponse, DiditVerificationResult } from '../types/didit';
 
-// Configuration from environment variables
-const DIDIT_API_KEY = process.env.DIDIT_API_KEY || '';
-const DIDIT_BASE_URL = process.env.DIDIT_BASE_URL || 'https://api.didit.me';
+// Configuration from environment variables via Expo Constants
+const DIDIT_API_KEY = Constants.expoConfig?.extra?.diditApiKey || '';
+const DIDIT_BASE_URL = Constants.expoConfig?.extra?.diditBaseUrl || 'https://api.didit.me';
 
 class DiditService {
   private apiKey: string;
