@@ -29,17 +29,26 @@ export interface FaceAnalysis {
   quality: number;
   /** Base64-encoded feature vector, or null when no face was found. */
   feature: string | null;
+  /** Faces the detector reported — used to explain failures. */
+  faceCount: number;
 }
 
-/** What the results screen renders, passed through router params. */
-export interface IdentityCheckResult {
-  liveness: number;
-  quality: number;
-  /** Raw cosine similarity between the ID photo and the selfie. */
-  matchScore: number;
-  /** SDK-calibrated similarity percentage (0–100). */
-  matchPercentage: number;
+/** What the local server stores per person. In memory only. */
+export interface Enrollment {
+  idNumber: string;
+  userInfo: UserInfo;
+  /** Feature from the enrolment selfie (best quality reference). */
+  selfieFeature: string;
+  /** Feature from the portrait on the ID card. */
+  documentFeature: string;
+  createdAt: number;
+}
+
+export type MatchKind = 'selfie' | 'document';
+
+export interface MatchResult {
+  enrollment: Enrollment;
+  similarity: number;
+  percentage: number;
   matched: boolean;
-  passed: boolean;
-  timestamp: number;
 }

@@ -11,8 +11,9 @@ Because the liveness engine is native code, **Expo Go cannot run this app** — 
 ## Commands
 
 ```bash
+npm run server            # local enrolment store on :3001 (in-memory, no .env needed)
 npm start                 # Expo dev server (needs a dev build, not Expo Go)
-npm run android / ios / web
+npm run android / ios
 
 npm run typecheck         # tsc against tsconfig.src.json — the ONLY clean typecheck
 npm test                  # jest; no tests exist yet (only empty __tests__ dirs)
@@ -29,16 +30,25 @@ eas build --profile development -p android   # dev client with the native module
 
 ### Flow (`src/app/`, expo-router, `typedRoutes` on)
 
-`index` → `id-form` → `document-capture` → `face-capture` → `verification`. All screens are headerless; `index.tsx` only redirects to `/id-form`.
+Two independent flows branching from `index.tsx` (home). All screens are headerless; state is passed as **JSON in router params**, not a store.
 
-State is passed as **JSON in router params**, not a store:
+**Enrolment — `index` → `/enroll/id-form` → `/enroll/document-capture` → `/enroll/face-capture` → `/enroll/success`**
 
-- `id-form.tsx` → `components/IdCardForm.tsx`; validates (via `utils/security.ts`) and pushes `{ userInfo }` to `/document-capture`.
-- `document-capture.tsx` → back camera, one shot. `livenessService.analyze()` must find a face; the resulting **feature vector (base64)** is the reference, pushed as `{ userInfo, referenceFeature }` to `/face-capture`.
-- `face-capture.tsx` → front camera, **3 shots** taken by `CameraStage`. Analyses them serially, keeps the frame with the highest liveness score, compares it to the reference, and `router.replace`s to `/verification` with `{ userInfo, result }`.
-- `verification.tsx` → pure results screen (no network): liveness, quality, match percentage, verdict.
+- `enroll/id-form.tsx` → `components/IdCardForm.tsx` with an `onSubmit` prop; validates via `utils/security.ts`.
+- `enroll/document-capture.tsx` → back camera, one shot; `analyze()` must find the printed portrait. Its **feature** becomes `documentFeature`.
+- `enroll/face-capture.tsx` → front camera, **3 shots**; keeps the highest-liveness frame, enforces `LIVENESS_THRESHOLD` / `QUALITY_THRESHOLD`, then `POST /api/enrollments` with both features.
+- `enroll/success.tsx` → confirmation + record summary.
+
+**Verification — `index` → `/verify/capture` → `/verify/result`**
+
+- `verify/capture.tsx` → chooser (selfie or ID card), then `CameraStage`. Fetches enrolments from the server and calls `livenessService.findBestMatch()`; like is matched against like (selfie↔selfieFeature, card↔documentFeature).
+- `verify/result.tsx` → closest record, similarity %, liveness, quality, verdict.
 
 `components/CameraStage.tsx` owns camera permission, preview, guide overlay, capture button, and the N-shot loop. Screens only supply copy + an `onPhotos(uris)` handler.
+
+### `server/index.js` (local enrolment store)
+
+Express on `0.0.0.0:3001`, **in memory only** — restarting loses every record. `POST /api/enrollments` (upsert keyed by `idNumber`), `GET /api/enrollments`, `DELETE /api/enrollments/:idNumber`, `GET /health`. Face matching is *not* done here: the device owns the SDK's similarity calibration, so it fetches the records and compares locally. `src/services/ApiClient.ts` resolves the host the same way the old proxy did (localhost / `10.0.2.2` / `<hostUri>`), so never hard-code an IP.
 
 ### `src/services/LivenessService.ts`
 
@@ -60,6 +70,7 @@ Thresholds live here as `LIVENESS_THRESHOLD` / `QUALITY_THRESHOLD` and are consu
 - **Expo version mismatch:** `AGENTS.md` points at `docs.expo.dev/versions/v57.0.0/`, but the project is SDK 58 / RN 0.88. Read the v58 docs.
 - **Nothing here runs in Expo Go.** `react-native-nitro-inspire-face` / `react-native-nitro-modules` are native; use `eas build --profile development` or `npx expo prebuild`.
 - **Web is no longer supported.** `LivenessService` imports a native-only module, so `npm run web` / `expo export --platform web` will fail. The app targets Android/iOS.
+- **Card portraits are hard to detect.** A face printed on an ID card is small and flat, so the SDK's defaults miss it. `LivenessService` creates its session with `detectPixelLevel: 640`, `setFaceDetectThreshold(0.35)` and `setFilterMinimumFacePixelSize(24)`. `FaceAnalysis.faceCount` is surfaced in the error alert — if it reports `0`, detection (not the feature step) is the problem.
 - The model is downloaded on first use, so the **first verification needs a network connection**; afterwards `ModelManager` serves it from cache. To bundle it instead, download `Pikachu` into `assets/models/` and add the package's config plugin with `{ modelName: 'Pikachu', modelDir: 'assets/models' }`.
 - `archive/` holds the retired integrations (`camdigikey/`, `didit/` — the old Express proxy, `start-all.sh`, `WEB_SETUP.md`). `archive/camdigikey/camdigikey.ts` is a broken file that breaks the root `tsc` run. Do not follow anything in `archive/`.
 - `README.md`, `SECURITY.md`, `FUTURE_PROOF.md`, `camdx-docs.md` and `mockoon-config.json` predate the current flow (CamDigiKey era). Don't treat them as current.

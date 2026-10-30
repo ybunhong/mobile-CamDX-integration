@@ -20,7 +20,162 @@ import {
     validateName,
 } from '../utils/security';
 
-export default function IdCardForm() {
+/** Demo citizens. IDs are 9 digits and all expire in the future. */
+const MOCK_USERS: UserInfo[] = [
+  {
+    idNumber: '011196245',
+    firstNameKh: 'ការឌុល',
+    lastNameKh: 'អេង',
+    firstNameEn: 'KADOL',
+    lastNameEn: 'ENG',
+    gender: 'M',
+    dob: '2000-05-06',
+    issuedDate: '2017-03-23',
+    expiredDate: '2027-03-22',
+  },
+  {
+    idNumber: '023456789',
+    firstNameKh: 'សុខ',
+    lastNameKh: 'មុន្នី',
+    firstNameEn: 'SOKH',
+    lastNameEn: 'MUNY',
+    gender: 'F',
+    dob: '1995-08-15',
+    issuedDate: '2018-07-10',
+    expiredDate: '2028-07-09',
+  },
+  {
+    idNumber: '034567890',
+    firstNameKh: 'វិច្ឆិ',
+    lastNameKh: 'គង់',
+    firstNameEn: 'VICHHEA',
+    lastNameEn: 'KONG',
+    gender: 'M',
+    dob: '1992-12-20',
+    issuedDate: '2017-11-15',
+    expiredDate: '2027-11-14',
+  },
+  {
+    idNumber: '045678901',
+    firstNameKh: 'សុភា',
+    lastNameKh: 'ចាន់',
+    firstNameEn: 'SOPHEA',
+    lastNameEn: 'CHAN',
+    gender: 'F',
+    dob: '1998-02-14',
+    issuedDate: '2017-06-12',
+    expiredDate: '2027-06-11',
+  },
+  {
+    idNumber: '056789012',
+    firstNameKh: 'ដារា',
+    lastNameKh: 'ហេង',
+    firstNameEn: 'DARA',
+    lastNameEn: 'HENG',
+    gender: 'M',
+    dob: '1990-11-03',
+    issuedDate: '2017-09-05',
+    expiredDate: '2027-09-04',
+  },
+  {
+    idNumber: '067890123',
+    firstNameKh: 'រតនា',
+    lastNameKh: 'សុខ',
+    firstNameEn: 'RATHANA',
+    lastNameEn: 'SOK',
+    gender: 'M',
+    dob: '1985-07-21',
+    issuedDate: '2019-01-18',
+    expiredDate: '2029-01-17',
+  },
+  {
+    idNumber: '078901234',
+    firstNameKh: 'ស្រីមុំ',
+    lastNameKh: 'គង់',
+    firstNameEn: 'SREYMOM',
+    lastNameEn: 'KONG',
+    gender: 'F',
+    dob: '1993-04-09',
+    issuedDate: '2017-12-02',
+    expiredDate: '2027-12-01',
+  },
+  {
+    idNumber: '089012345',
+    firstNameKh: 'វិសាល',
+    lastNameKh: 'ម៉ៅ',
+    firstNameEn: 'VISAL',
+    lastNameEn: 'MAO',
+    gender: 'M',
+    dob: '2001-09-30',
+    issuedDate: '2018-03-27',
+    expiredDate: '2028-03-26',
+  },
+  {
+    idNumber: '090123456',
+    firstNameKh: 'កញ្ញា',
+    lastNameKh: 'លី',
+    firstNameEn: 'KANYA',
+    lastNameEn: 'LY',
+    gender: 'F',
+    dob: '1996-12-17',
+    issuedDate: '2020-08-14',
+    expiredDate: '2030-08-13',
+  },
+  {
+    idNumber: '101234567',
+    firstNameKh: 'ពិសិដ្ឋ',
+    lastNameKh: 'ស៊ឹម',
+    firstNameEn: 'PISETH',
+    lastNameEn: 'SIM',
+    gender: 'M',
+    dob: '1988-03-25',
+    issuedDate: '2017-11-09',
+    expiredDate: '2027-11-08',
+  },
+  {
+    idNumber: '112345678',
+    firstNameKh: 'លីដា',
+    lastNameKh: 'អ៊ុក',
+    firstNameEn: 'LYDA',
+    lastNameEn: 'OUK',
+    gender: 'F',
+    dob: '1999-06-05',
+    issuedDate: '2021-02-22',
+    expiredDate: '2031-02-21',
+  },
+  {
+    idNumber: '123456789',
+    firstNameKh: 'មករា',
+    lastNameKh: 'ព្រំ',
+    firstNameEn: 'MAKARA',
+    lastNameEn: 'PRAM',
+    gender: 'M',
+    dob: '1991-01-11',
+    issuedDate: '2018-05-19',
+    expiredDate: '2028-05-18',
+  },
+  {
+    idNumber: '134567890',
+    firstNameKh: 'ណារី',
+    lastNameKh: 'នួន',
+    firstNameEn: 'NARY',
+    lastNameEn: 'NUON',
+    gender: 'F',
+    dob: '1994-08-28',
+    issuedDate: '2019-10-07',
+    expiredDate: '2029-10-06',
+  },
+];
+
+/** Rotates through MOCK_USERS so repeated taps never reuse an ID number. */
+let mockCursor = 0;
+
+interface IdCardFormProps {
+  /** Called with the sanitised values on a valid submit. */
+  onSubmit?: (info: UserInfo) => void;
+}
+
+export default function IdCardForm({ onSubmit }: IdCardFormProps) {
   const [userInfo, setUserInfo] = useState<UserInfo>({
     idNumber: '',
     firstNameKh: '',
@@ -72,58 +227,34 @@ export default function IdCardForm() {
 
   const handleSubmit = () => {
     if (validateForm()) {
-      // Sanitize user info before sending
-      const sanitizedUserInfo = sanitizeUserInfo(userInfo);
-      router.push({
-        pathname: '/document-capture',
-        params: { userInfo: JSON.stringify(sanitizedUserInfo) },
-      });
+      const sanitizedUserInfo = sanitizeUserInfo(userInfo) as UserInfo;
+
+      if (onSubmit) {
+        onSubmit(sanitizedUserInfo);
+      } else {
+        router.push({
+          pathname: '/enroll/document-capture',
+          params: { userInfo: JSON.stringify(sanitizedUserInfo) },
+        });
+      }
     } else {
       Alert.alert('Validation Error', 'Please fill in all required fields correctly');
     }
   };
 
   const handleAutoFill = () => {
-    const mockDataOptions: UserInfo[] = [
-      {
-        idNumber: '011196245',
-        firstNameKh: 'ការឌុល',
-        lastNameKh: 'អេង',
-        firstNameEn: 'KADOL',
-        lastNameEn: 'ENG',
-        gender: 'M',
-        dob: '2000-05-06',
-        issuedDate: '2016-03-23',
-        expiredDate: '2026-03-22',
-      },
-      {
-        idNumber: '023456789',
-        firstNameKh: 'សុខ',
-        lastNameKh: 'មុន្នី',
-        firstNameEn: 'SOKH',
-        lastNameEn: 'MUNY',
-        gender: 'F',
-        dob: '1995-08-15',
-        issuedDate: '2018-07-10',
-        expiredDate: '2028-07-09',
-      },
-      {
-        idNumber: '034567890',
-        firstNameKh: 'វិច្ឆិ',
-        lastNameKh: 'គង់',
-        firstNameEn: 'VICHHEA',
-        lastNameEn: 'KONG',
-        gender: 'M',
-        dob: '1992-12-20',
-        issuedDate: '2015-11-15',
-        expiredDate: '2025-11-14',
-      },
-    ];
+    // Cycle instead of picking at random: enrolments are keyed by ID number, so
+    // two random taps landing on the same person would silently overwrite one
+    // record and the stored count would not grow.
+    const mock = MOCK_USERS[mockCursor % MOCK_USERS.length];
+    mockCursor += 1;
 
-    const randomMockData = mockDataOptions[Math.floor(Math.random() * mockDataOptions.length)];
-    setUserInfo(randomMockData);
+    setUserInfo(mock);
     setErrors({});
-    Alert.alert('Auto-filled', 'Form has been populated with mock Cambodian citizen data');
+    Alert.alert(
+      'Auto-filled',
+      `Mock citizen ${mock.idNumber} — ${mock.lastNameEn} ${mock.firstNameEn}`,
+    );
   };
 
   const updateField = (field: keyof UserInfo, value: string) => {

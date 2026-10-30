@@ -1,6 +1,6 @@
 import { TurboModuleRegistry } from 'react-native';
 import type { Session, SessionCustomParameter } from 'react-native-nitro-inspire-face';
-import type { FaceAnalysis } from '../types/identity';
+import type { Enrollment, FaceAnalysis, MatchKind, MatchResult } from '../types/identity';
 
 /**
  * Pikachu is the smallest InspireFace model pack (17 MB) and supports silent
@@ -19,6 +19,13 @@ export const QUALITY_THRESHOLD = 0.4;
 export const NATIVE_UNAVAILABLE_MESSAGE =
   'The on-device face engine is not available in Expo Go. Install a development build ' +
   '(eas build --profile development -p android) to run verification.';
+
+/** Detection resolution used when scanning a still photo. */
+const DETECT_PIXEL_LEVEL = 640;
+/** Detection confidence floor. Lower than the SDK default (0.5) for card portraits. */
+const DETECT_THRESHOLD = 0.35;
+/** Ignore faces smaller than this, in pixels of the detection image. */
+const MIN_FACE_PIXELS = 24;
 
 const SESSION_PARAMS: SessionCustomParameter = {
   enableLiveness: true,
@@ -98,14 +105,18 @@ class LivenessService {
         await launchWithRemoteModel(MODEL_URL, MODEL_SHA256);
       }
 
+      // 640 px detection resolution and a low confidence floor: a portrait
+      // printed on an ID card is small and flat, and the default 320/0.5
+      // settings routinely miss it.
       const session = InspireFace.createSession(
         SESSION_PARAMS,
         DetectMode.ALWAYS_DETECT,
-        1,
-        -1,
+        5,
+        DETECT_PIXEL_LEVEL,
         -1,
       );
-      session.setFaceDetectThreshold(0.5);
+      session.setFaceDetectThreshold(DETECT_THRESHOLD);
+      session.setFilterMinimumFacePixelSize(MIN_FACE_PIXELS);
       this.session = session;
     })().catch((error: unknown) => {
       // Allow a later retry (e.g. the model download failed while offline).
@@ -131,7 +142,7 @@ class LivenessService {
 
     const faces = session.executeFaceTrack(stream);
     if (faces.length === 0) {
-      return { faceDetected: false, liveness: 0, quality: 0, feature: null };
+      return { faceDetected: false, liveness: 0, quality: 0, feature: null, faceCount: 0 };
     }
 
     const face = faces[0];
@@ -142,6 +153,7 @@ class LivenessService {
       liveness: clamp01(session.getRGBLivenessConfidence()[0] ?? 0),
       quality: clamp01(session.getFaceQualityConfidence()[0] ?? 0),
       feature: InspireFace.toBase64(session.extractFaceFeature(stream, face.token)),
+      faceCount: faces.length,
     };
   }
 
@@ -159,6 +171,32 @@ class LivenessService {
       percentage: InspireFace.cosineSimilarityConvertToPercentage(similarity),
       matched: similarity >= InspireFace.getRecommendedCosineThreshold(),
     };
+  }
+
+  /**
+   * Compares a probe feature against every enrolment and returns the closest
+   * one. Like is matched against like: a card portrait against the stored
+   * document feature, a selfie against the stored selfie feature.
+   */
+  findBestMatch(
+    feature: string,
+    kind: MatchKind,
+    enrollments: Enrollment[],
+  ): MatchResult | null {
+    let best: MatchResult | null = null;
+
+    for (const enrollment of enrollments) {
+      const reference =
+        kind === 'selfie' ? enrollment.selfieFeature : enrollment.documentFeature;
+      if (!reference) continue;
+
+      const comparison = this.compare(reference, feature);
+      if (!best || comparison.similarity > best.similarity) {
+        best = { enrollment, ...comparison };
+      }
+    }
+
+    return best;
   }
 }
 
