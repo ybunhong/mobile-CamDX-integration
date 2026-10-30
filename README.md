@@ -1,48 +1,77 @@
 # On-device eKYC for Cambodian ID cards
 
-Expo app that verifies an ID card and a selfie **entirely on the phone**. Nothing is uploaded: there is no backend, no API key, and no per-check cost.
+An Expo app that verifies identity **on the phone**. Face detection, silent liveness, image
+quality and face matching all run natively on the device — no photo is uploaded, no API key is
+used, and there is no per-check cost.
 
-## What it checks
+A small local server keeps enrolments in memory so a person can be enrolled once and verified
+many times.
 
-1. **ID details** — 9-digit ID number, Khmer/English names, dates, gender (validated before capture).
-2. **ID card photo** — the portrait is located and turned into a reference face feature.
-3. **Selfie** — three frames are scored for **silent (passive) liveness** and image quality; the best frame is compared against the ID photo.
+## Two flows
 
-Liveness, quality, and face matching come from [InspireFace](https://github.com/HyperInspire/InspireFace) via `react-native-nitro-inspire-face`, running natively on CPU.
+```
+Home
+├─ Add face
+│   ID form → photograph the card's portrait → liveness-checked selfie → saved
+└─ Verify identity
+    Selfie or ID-card scan → matched against every enrolment
+```
+
+Enrolment stores the ID fields plus two face feature vectors: one from the card portrait and one
+from the selfie. Verification compares like with like, so a card scan is matched against card
+portraits and the SDK's similarity calibration decides the verdict.
 
 ## Requirements
 
-- Node 20+, an Expo account (or a local Android SDK)
-- **A development build** — the native face SDK cannot run in Expo Go
+- Node 20+
+- **A development build.** The face engine is native C++; Expo Go cannot load it.
+- The local server and the phone must share a network.
 
-## Install and run
+## Run it
 
 ```bash
 npm install
+npm run server          # enrolment store on :3001 (in memory, cleared on restart)
+npm start               # then open the installed dev client
+```
 
-# Build a dev client (native modules required)
+Build the dev client once:
+
+```bash
 eas build --profile development -p android
-
-npm start          # then open the installed dev client
 ```
 
-On first verification the app downloads the 17 MB `Pikachu` model pack (SHA-256 verified) and caches it; later runs work offline.
+On first use the app downloads the 17 MB `Pikachu` model pack (SHA-256 verified) and caches it;
+later runs work offline.
 
-## Layout
+## Checks
 
-```
-src/app/            # expo-router screens: id-form → document-capture → face-capture → verification
-src/components/     # IdCardForm, CameraStage (camera + N-shot capture)
-src/services/       # LivenessService — model launch, analysis, face comparison
-src/types/          # identity types shared across screens
-src/utils/          # input sanitisation and validators
-src/theme.ts        # colours, spacing, typography, shared styles
+```bash
+npm run typecheck       # tsc against tsconfig.src.json
+npm run test:server     # boots the server and exercises every endpoint
 ```
 
-## Thresholds
+CI runs both on every push and pull request (`.github/workflows/ci.yml`).
 
-`LIVENESS_THRESHOLD` (0.5) and `QUALITY_THRESHOLD` (0.4) live in `src/services/LivenessService.ts`. Face-match acceptance uses the SDK's own recommended cosine threshold rather than a hardcoded number.
+## Project layout
+
+```
+src/app/            expo-router screens: home, enroll/*, verify/*
+src/components/     IdCardForm, CameraStage, DevBuildNotice
+src/services/       LivenessService (model + face pipeline), ApiClient
+src/types/          shared identity types
+src/utils/          input sanitisation and validators
+server/             in-memory enrolment store + smoke test
+```
+
+## Tuning
+
+`src/services/LivenessService.ts` holds `LIVENESS_THRESHOLD` (0.5) and `QUALITY_THRESHOLD` (0.4),
+plus the detection settings tuned for faces printed on ID cards (`detectPixelLevel: 640`,
+threshold `0.35`). Face-match acceptance uses the SDK's own recommended cosine threshold.
 
 ## Licence notes
 
-The app code is under the repository's MIT licence. The bundled/downloaded InspireFace **model pack** is distributed by the InspireFace project and carries its own terms — review them before publishing to an app store.
+App code is covered by the repository's MIT licence. The InspireFace **model pack** is distributed
+by the [InspireFace](https://github.com/HyperInspire/InspireFace) project and carries its own terms
+— review them before publishing to an app store.
