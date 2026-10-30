@@ -1,27 +1,27 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { borderRadius, colors, commonStyles, spacing } from '../theme';
-import { FormErrors } from '../types/didit';
+import type { FormErrors, UserInfo } from '../types/identity';
 import {
-  sanitizeInput,
-  sanitizeUserInfo,
-  validateDateFormat,
-  validateGender,
-  validateIdNumber,
-  validateName,
+    sanitizeInput,
+    sanitizeUserInfo,
+    validateDateFormat,
+    validateGender,
+    validateIdNumber,
+    validateName,
 } from '../utils/security';
 
 export default function IdCardForm() {
-  const [userInfo, setUserInfo] = useState<DiditUserInfo>({
+  const [userInfo, setUserInfo] = useState<UserInfo>({
     idNumber: '',
     firstNameKh: '',
     lastNameKh: '',
@@ -75,7 +75,7 @@ export default function IdCardForm() {
       // Sanitize user info before sending
       const sanitizedUserInfo = sanitizeUserInfo(userInfo);
       router.push({
-        pathname: '/face-capture',
+        pathname: '/document-capture',
         params: { userInfo: JSON.stringify(sanitizedUserInfo) },
       });
     } else {
@@ -84,7 +84,7 @@ export default function IdCardForm() {
   };
 
   const handleAutoFill = () => {
-    const mockDataOptions: DiditUserInfo[] = [
+    const mockDataOptions: UserInfo[] = [
       {
         idNumber: '011196245',
         firstNameKh: 'ការឌុល',
@@ -126,7 +126,7 @@ export default function IdCardForm() {
     Alert.alert('Auto-filled', 'Form has been populated with mock Cambodian citizen data');
   };
 
-  const updateField = (field: keyof DiditUserInfo, value: string) => {
+  const updateField = (field: keyof UserInfo, value: string) => {
     // Sanitize input on change
     const sanitizedValue = sanitizeInput(value);
     setUserInfo(prev => ({ ...prev, [field]: sanitizedValue }));

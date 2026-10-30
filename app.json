@@ -37,8 +37,7 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
-      ],
-      "blockExternalIntents": true
+      ]
     },
     "web": {
       "output": "static",
@@ -53,8 +52,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ],
-      "@didit-protocol/sdk-react-native"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -64,8 +62,7 @@
       "router": {},
       "eas": {
         "projectId": "dddb070f-1a86-4c54-b720-becc3b3648af"
-      },
-      "diditBaseUrl": "https://verification.didit.me"
+      }
     },
     "owner": "ybunhongggs-team"
   }
