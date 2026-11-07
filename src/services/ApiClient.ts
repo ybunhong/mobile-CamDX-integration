@@ -9,6 +9,10 @@ import type { Enrollment } from '../types/identity';
  * - phone:        http://<expo hostUri>:3001 (same LAN as the packager)
  */
 function resolveBaseUrl(): string {
+  // Production builds: hosted server URL injected via EAS env.
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl) return envUrl.replace(/\/$/, '');
+
   if (Platform.OS === 'web') return 'http://localhost:3001';
 
   const hostUri =
