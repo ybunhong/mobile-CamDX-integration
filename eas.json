@@ -17,7 +17,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REPLACE-ME.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://mobile-camdx-integration.onrender.com"
       }
     }
   },

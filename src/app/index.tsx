@@ -1,3 +1,4 @@
+import { useObserve } from 'expo-observe';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -7,6 +8,11 @@ import { borderRadius, colors, commonStyles, spacing, typography } from '../them
 export default function HomeScreen() {
   const [count, setCount] = useState<number | null>(null);
   const [offline, setOffline] = useState(false);
+  const { markInteractive } = useObserve();
+
+  useEffect(() => {
+    markInteractive();
+  }, [markInteractive]);
 
   useEffect(() => {
     apiClient

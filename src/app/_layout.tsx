@@ -1,7 +1,10 @@
+import { Observe, ObserveRoot } from 'expo-observe';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-export default function RootLayout() {
+Observe.configure({ integrations: { 'expo-router': true } });
+
+function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
@@ -9,3 +12,5 @@ export default function RootLayout() {
     </>
   );
 }
+
+export default ObserveRoot.wrap(RootLayout);
